@@ -194,7 +194,10 @@ var NUM_WORDS = {
   one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
   ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15,
   sixteen:16, seventeen:17, eighteen:18, nineteen:19,
-  twenty:20, thirty:30, forty:40, fifty:50, sixty:60
+  twenty:20, thirty:30, forty:40, fifty:50, sixty:60,
+  // iOS en-US often keeps Italian words verbatim or approximates them:
+  do:2, doo:2, tray:3, quatro:4, say:6, setti:7, novi:9,
+  vente:20, trente:30, quarante:40, cinquante:50
 };
 
 function toNum(w){ return NUM_WORDS.hasOwnProperty(w) ? NUM_WORDS[w] : null; }
@@ -445,7 +448,7 @@ function _startRec(){
   var r = new SR();
   r.continuous     = false;
   r.interimResults = false;
-  r.lang           = 'it-IT';
+  r.lang           = 'en-US';
 
   r.onstart = function(){ _recLive = true;  _micOn(); };
 
