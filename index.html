@@ -247,17 +247,16 @@ function fmt(s){
   return (m<10?'0':'')+m+"'"+(r<10?'0':'')+r+"''";
 }
 
-function render(){
+function render(){ renderFull(); }
+
+function renderFull(){
   var seq = S.area ? S.seqs[S.area] : [], item = seq[S.idx];
   document.getElementById('area-name').textContent = S.area ? S.area.toUpperCase() : '—';
   var meta = document.getElementById('meta');
   var pos = seq.length > 0 ? (S.idx+1)+' / '+seq.length : '';
   meta.textContent = S.mode.toUpperCase() + (pos ? '  '+pos : '');
   meta.className = S.mode==='running' ? 'running' : '';
-  document.getElementById('timer').textContent = fmt(item ? item.duration - S.elapsed : 0);
-  var pct = (item && item.duration > 0) ? Math.min(100, (S.elapsed/item.duration)*100) : 0;
-  document.getElementById('progress-fill').style.width = pct+'%';
-  document.getElementById('progress-head').style.left = pct+'%';
+  _renderTimer(item);
   document.getElementById('sequence').innerHTML = seq.map(function(s,i){
     var cls = i===S.idx ? 'current' : i<S.idx ? 'past' : '';
     return '<div class="step '+cls+'"><div class="dot"></div>'
@@ -265,6 +264,13 @@ function render(){
       +'<span class="step-name">'+(s.name||'—')+'</span>'
       +'<span class="step-dur">'+fmt(s.duration)+'</span></div>';
   }).join('');
+}
+
+function _renderTimer(item){
+  document.getElementById('timer').textContent = fmt(item ? item.duration - S.elapsed : 0);
+  var pct = (item && item.duration > 0) ? Math.min(100, (S.elapsed/item.duration)*100) : 0;
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('progress-head').style.left = pct+'%';
 }
 
 // ════════════════════════════════════════════════
@@ -289,29 +295,27 @@ function startTimer(){
       var dur = seq[S.idx].duration;
       for(var s = prev+1; s <= el; s++){
         if(s >= dur){
-          // Interval complete
           clearTim(); S.elapsed = dur; snd.end();
           var nxt = S.idx + 1;
           if(nxt < seq.length){
             S.idx = nxt; S.elapsed = 0; S.mode = 'ready';
             (function(nm){
-              setTimeout(function(){ say(nm); flash('READY'); render(); }, 900);
+              setTimeout(function(){ say(nm); flash('READY'); renderFull(); }, 900);
             })(seq[nxt].name ? seq[nxt].name.toLowerCase() : 'interval '+(nxt+1));
           } else {
             S.elapsed = 0; S.mode = 'idle';
-            setTimeout(function(){ say('done'); flash('DONE'); render(); }, 900);
+            setTimeout(function(){ say('done'); flash('DONE'); renderFull(); }, 900);
           }
-          render(); return;
+          renderFull(); return;
         }
-        // Per-second audio feedback
         if(s > 0 && s % 60 === 0)      snd.minute();
         else if(s > 0 && s % 30 === 0) snd.halfMin();
         else                            snd.tick();
       }
       S.elapsed = el; prev = el;
     }
-    render();
-  }, 80);
+    _renderTimer(seq[S.idx]);
+  }, 250);
 }
 
 function stopTim(){ clearTim(); if(S.mode === 'running') S.mode = 'stopped'; }
@@ -441,7 +445,7 @@ function _startRec(){
   var r = new SR();
   r.continuous     = false;
   r.interimResults = false;
-  r.lang           = 'en-US';
+  r.lang           = 'it-IT';
 
   r.onstart = function(){ _recLive = true;  _micOn(); };
 
@@ -500,12 +504,22 @@ function initRec(){
 document.getElementById('overlay').addEventListener('click', function(){
   _ctx = new (window.AudioContext || window.webkitAudioContext)();
   if(_ctx.state === 'suspended') _ctx.resume();
+
+  // iOS TTS: voices load asynchronously; trigger load now so first say() isn't silent
+  if(window.speechSynthesis){
+    speechSynthesis.getVoices();
+    // Warm-up: speak an empty utterance to unlock the audio session on iOS
+    var warm = new SpeechSynthesisUtterance(' ');
+    warm.volume = 0; warm.lang = 'en-US';
+    speechSynthesis.speak(warm);
+  }
+
   document.getElementById('overlay').style.display = 'none';
   initRec();
-  render();
+  renderFull();
 }, { once: true });
 
-render();
-</script>
+renderFull();
+
 </body>
 </html>
