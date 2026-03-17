@@ -60,13 +60,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <div id="overlay">
   <h1>DVC</h1>
   <div class="sub">Darkroom Vocal Controller</div>
-  <div class="tap">Tocca per attivare</div>
+  <div class="tap">Tap to activate</div>
   <div class="hint">
-    <span>Dry</span> / <span>Wet</span> — seleziona area<br>
-    <span>Set [nome] 1 30</span> — aggiungi intervallo<br>
-    <span>Poi</span> + <span>Set…</span> — concatena intervalli<br>
-    <span>Go / Via</span> — avvia &nbsp;·&nbsp; <span>Back / Indietro</span> — ferma e torna<br>
-    <span>[nome intervallo]</span> — salta a quell'intervallo
+    <span>DRY</span> / <span>WET</span> — select area<br>
+    <span>SET [NAME] [TIME]</span> — add interval, repeat to chain<br>
+    <span>GO</span> — start &nbsp;·&nbsp; <span>BACK</span> — stop and rewind<br>
+    <span>[interval name]</span> — jump to interval
   </div>
 </div>
 
@@ -152,7 +151,7 @@ function _sayNext(){
   var text = _sayQueue.shift();
   recAbortForTTS();
   var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'it-IT'; u.rate = 0.9; u.pitch = 0.8; u.volume = 1;
+  u.lang = 'en-US'; u.rate = 0.9; u.pitch = 0.8; u.volume = 1;
   u.onend = u.onerror = function(){
     setTimeout(function(){
       // Clear _sayBusy FIRST so recResumeAfterTTS can proceed
@@ -296,11 +295,11 @@ function startTimer(){
           if(nxt < seq.length){
             S.idx = nxt; S.elapsed = 0; S.mode = 'ready';
             (function(nm){
-              setTimeout(function(){ say(nm); flash('PRONTO'); render(); }, 900);
-            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : 'intervallo '+(nxt+1));
+              setTimeout(function(){ say(nm); flash('READY'); render(); }, 900);
+            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : 'interval '+(nxt+1));
           } else {
             S.elapsed = 0; S.mode = 'idle';
-            setTimeout(function(){ say('sequenza completata'); flash('FINE'); render(); }, 900);
+            setTimeout(function(){ say('done'); flash('DONE'); render(); }, 900);
           }
           render(); return;
         }
@@ -340,43 +339,34 @@ function handle(transcript){
     flash(a.toUpperCase()); say(a); render(); return;
   }
 
-  // ── SET / IMPOSTA ───────────────────────────
-  if(words[0]==='set' || words[0]==='imposta'){
-    if(!S.area){ say("seleziona prima un'area"); return; }
+  // ── SET ─────────────────────────────────────
+  if(words[0]==='set'){
+    if(!S.area){ say('select an area first'); return; }
     var rest = words.slice(1);
     var name = null, timeW = rest;
-    // First word that is not time-related = name
     if(rest.length > 0 && !isTimeish(rest[0])){
       name = rest[0].toUpperCase();
       timeW = rest.slice(1);
     }
     var dur = parseDur(timeW);
-    if(!dur || dur <= 0){ say('tempo non valido'); return; }
+    if(!dur || dur <= 0){ say('invalid time'); return; }
     S.seqs[S.area].push({ name:name, duration:dur });
     S.mode = 'ready';
     var fb = name ? 'set '+name.toLowerCase() : 'set';
     flash(fb.toUpperCase()); say(fb); render(); return;
   }
 
-  // ── THEN / POI ──────────────────────────────
-  if(words[0]==='then' || words[0]==='poi'){
-    flash('POI'); say('poi'); return;
-  }
-
-  // ── GO / VIA / AVVIA / START ────────────────
-  if(words[0]==='go' || words[0]==='vai' || words[0]==='via' ||
-     words[0]==='avvia' || words[0]==='start'){
-    if(!S.area){ say("seleziona prima un'area"); return; }
+  // ── GO ──────────────────────────────────────
+  if(words[0]==='go'){
+    if(!S.area){ say('select an area first'); return; }
     var seq = S.seqs[S.area];
-    if(!seq.length){ say('nessun intervallo impostato'); return; }
+    if(!seq.length){ say('no intervals set'); return; }
     if(S.idx >= seq.length){ S.idx = 0; S.elapsed = 0; }
-    flash('GO'); say('via'); startTimer(); render(); return;
+    flash('GO'); say('go'); startTimer(); render(); return;
   }
 
-  // ── BACK / INDIETRO — stop + rewind ─────────
-  // First Back: rewind to start of current interval (stop if running)
-  // Second Back (already at start): go to previous interval
-  if(words[0]==='back' || words[0]==='indietro'){
+  // ── BACK — stop + rewind ─────────────────────
+  if(words[0]==='back'){
     if(!S.area) return;
     stopTim();
     if(S.elapsed > 0){
@@ -390,12 +380,12 @@ function handle(transcript){
     render(); return;
   }
 
-  // ── CLEAR / CANCELLA ───────────────────────
-  if(words[0]==='clear' || words[0]==='cancella'){
+  // ── CLEAR ───────────────────────────────────
+  if(words[0]==='clear'){
     if(!S.area) return;
     stopTim();
     S.seqs[S.area] = []; S.idx = 0; S.elapsed = 0; S.mode = 'idle';
-    flash('CLEAR'); say('cancellato'); render(); return;
+    flash('CLEAR'); say('clear'); render(); return;
   }
 
   // ── NAMED INTERVAL JUMP ─────────────────────
@@ -451,7 +441,7 @@ function _startRec(){
   var r = new SR();
   r.continuous     = false;
   r.interimResults = false;
-  r.lang           = 'it-IT';
+  r.lang           = 'en-US';
 
   r.onstart = function(){ _recLive = true;  _micOn(); };
 
@@ -463,7 +453,7 @@ function _startRec(){
   r.onerror = function(e){
     _recLive = false; _micOff();
     if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      setHeard('mic negato — usa i tasti');
+      setHeard('mic denied — use buttons');
       document.getElementById('btn-panel').style.display = 'grid';
       _recEnabled = false; return;
     }
@@ -481,12 +471,12 @@ function _startRec(){
 
 function initRec(){
   if(!SR){
-    setHeard('riconoscimento non supportato');
+    setHeard('speech not supported');
     document.getElementById('btn-panel').style.display = 'grid';
     return;
   }
   _recEnabled = true;
-  setHeard('in ascolto…');
+  setHeard('listening…');
   _schedRec(200);
 }
 
