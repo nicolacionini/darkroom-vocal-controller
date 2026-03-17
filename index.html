@@ -149,17 +149,28 @@ function tone(freq, dur, vol, type){
 }
 
 var snd = {
-  tick:    function(){ tone(520, 0.04, 0.18); },
+  // Tick: shorter attack, clearly audible
+  tick:    function(){ tone(540, 0.06, 0.32); },
+
+  // 30-second mark: two distinct pips, clearly different from tick
   halfMin: function(){
-    tone(700, 0.09, 0.45);
-    setTimeout(function(){ tone(700, 0.09, 0.45); }, 160);
+    tone(720, 0.11, 0.55);
+    setTimeout(function(){ tone(720, 0.11, 0.55); }, 170);
   },
-  minute:  function(){ tone(960, 0.28, 0.60); },
+
+  // 1-minute mark: single firm tone, clearly different from halfMin
+  minute:  function(){ tone(980, 0.30, 0.70); },
+
+  // End of interval: three ascending tones
+  // Total duration: last tone starts at 520ms, lasts 400ms → ends at ~920ms
   end:     function(){
-    tone(1100, 0.20, 0.70);
-    setTimeout(function(){ tone(1100, 0.20, 0.70); }, 250);
-    setTimeout(function(){ tone(1500, 0.38, 0.85); }, 500);
-  }
+    tone(1100, 0.22, 0.75);
+    setTimeout(function(){ tone(1100, 0.22, 0.75); }, 260);
+    setTimeout(function(){ tone(1520, 0.40, 0.90); }, 520);
+  },
+
+  // Total end sound duration in ms — used to delay TTS safely
+  endDur: 520 + 400 + 150  // last tone onset + duration + safety margin
 };
 
 // ══════════════════════════════════════════════════
@@ -332,11 +343,11 @@ function startTimer(){
           if(nxt < seq.length){
             S.idx = nxt; S.elapsed = 0; S.mode = 'ready';
             (function(nm){
-              setTimeout(function(){ say(nm); flash(s('ready').toUpperCase()); renderFull(); }, 900);
+              setTimeout(function(){ say(nm); flash(s('ready').toUpperCase()); renderFull(); }, snd.endDur);
             })(seq[nxt].name ? seq[nxt].name.toLowerCase() : s('interval')+' '+(nxt+1));
           } else {
             S.elapsed = 0; S.mode = 'idle';
-            setTimeout(function(){ say(s('done')); flash(s('done').toUpperCase()); renderFull(); }, 900);
+            setTimeout(function(){ say(s('done')); flash(s('done').toUpperCase()); renderFull(); }, snd.endDur);
           }
           renderFull(); return;
         }
