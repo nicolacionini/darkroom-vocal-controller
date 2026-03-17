@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="it">
+<html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -8,26 +8,33 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--r:#FF2200;--r2:#991500;--r3:#3A0800;--r4:#1A0300;--bg:#000;}
-html,body{background:var(--bg);color:var(--r);font-family:'Share Tech Mono',monospace;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;}
-body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:999;}
+html,body{background:var(--bg);color:var(--r);font-family:'Share Tech Mono',monospace;height:100%;overflow:hidden;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:999;}
 
-#overlay{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.5rem;z-index:998;cursor:pointer;}
+/* ── OVERLAY ── */
+#overlay{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.6rem;z-index:998;}
 #overlay h1{font-family:'VT323',monospace;font-size:clamp(3rem,14vw,5.5rem);letter-spacing:0.3em;color:var(--r2);font-weight:400;}
 #overlay .sub{font-size:0.65rem;letter-spacing:0.45em;color:var(--r3);text-transform:uppercase;}
-#overlay .tap{font-size:0.75rem;letter-spacing:0.45em;color:var(--r);text-transform:uppercase;margin-top:2.5rem;animation:blink 1.4s ease-in-out infinite;}
-#overlay .hint{margin-top:2.5rem;font-size:0.58rem;letter-spacing:0.15em;color:var(--r3);line-height:2.5;text-align:center;text-transform:uppercase;}
+#overlay .lang-btns{display:flex;gap:1.2rem;margin-top:2.8rem;flex-wrap:wrap;justify-content:center;}
+.lang-btn{background:transparent;border:1px solid var(--r2);color:var(--r);font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.3em;text-transform:uppercase;padding:0.75rem 1.4rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.15s,color 0.15s;}
+.lang-btn:active,.lang-btn:hover{background:var(--r2);color:#000;}
+#overlay .hint{margin-top:2.2rem;font-size:0.56rem;letter-spacing:0.14em;color:var(--r3);line-height:2.6;text-align:center;text-transform:uppercase;}
 #overlay .hint span{color:var(--r2);}
+#overlay .hint em{color:var(--r3);font-style:normal;}
 
+/* ── APP ── */
 #app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto auto 1fr;padding:1.2rem 1.5rem 5.5rem;}
 #area-name{font-family:'VT323',monospace;font-size:clamp(2rem,9vw,3.2rem);letter-spacing:0.3em;color:var(--r2);font-weight:400;line-height:1;}
 #meta{font-size:0.62rem;letter-spacing:0.25em;color:var(--r3);margin-top:0.2rem;min-height:0.9rem;}
 #meta.running{color:var(--r2);}
 #timer{font-family:'VT323',monospace;font-size:clamp(5rem,30vw,12rem);line-height:0.9;color:var(--r);letter-spacing:0.02em;user-select:none;margin:0.2rem 0;}
 
+/* ── PROGRESS ── */
 #progress-wrap{height:2px;background:var(--r4);position:relative;margin:0.5rem 0 0.8rem;}
-#progress-fill{position:absolute;top:0;left:0;height:100%;background:var(--r3);width:0%;transition:width 0.12s linear;}
-#progress-head{position:absolute;top:-2px;width:6px;height:6px;background:var(--r);border-radius:50%;box-shadow:0 0 7px var(--r);left:0%;transform:translateX(-50%);transition:left 0.12s linear;}
+#progress-fill{position:absolute;top:0;left:0;height:100%;background:var(--r3);width:0%;transition:width 0.2s linear;}
+#progress-head{position:absolute;top:-2px;width:6px;height:6px;background:var(--r);border-radius:50%;box-shadow:0 0 7px var(--r);left:0%;transform:translateX(-50%);transition:left 0.2s linear;}
 
+/* ── SEQUENCE ── */
 #sequence{overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--r3) transparent;}
 .step{display:flex;align-items:center;gap:0.7rem;padding:0.3rem 0;color:var(--r3);font-size:0.75rem;letter-spacing:0.14em;text-transform:uppercase;border-bottom:1px solid var(--r4);}
 .step:last-child{border-bottom:none;}
@@ -41,6 +48,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .step-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .step-dur{flex-shrink:0;}
 
+/* ── STATUS BAR ── */
 #statusbar{position:fixed;bottom:0;left:0;right:0;padding:0.8rem 1.5rem;background:var(--bg);border-top:1px solid var(--r4);display:flex;align-items:center;gap:0.8rem;}
 .mic-ring{width:8px;height:8px;border-radius:50%;background:var(--r3);flex-shrink:0;transition:background 0.2s;}
 .mic-ring.on{background:var(--r);animation:blink 1.1s ease-in-out infinite;box-shadow:0 0 6px var(--r);}
@@ -48,8 +56,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #cmd-flash{font-size:0.65rem;letter-spacing:0.22em;color:var(--r);text-transform:uppercase;flex-shrink:0;opacity:0;transition:opacity 0.1s;}
 #cmd-flash.show{opacity:1;}
 
+/* ── BUTTON PANEL ── */
 #btn-panel{display:none;position:fixed;bottom:2.9rem;left:0;right:0;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--r4);border-top:1px solid var(--r3);}
-#btn-panel button{background:var(--bg);border:none;color:var(--r2);font-family:'Share Tech Mono',monospace;font-size:0.56rem;letter-spacing:0.16em;padding:0.65rem 0.2rem;cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
+#btn-panel button{background:var(--bg);border:none;color:var(--r2);font-family:'Share Tech Mono',monospace;font-size:0.54rem;letter-spacing:0.14em;padding:0.65rem 0.2rem;cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
 #btn-panel button:active{background:var(--r4);color:var(--r);}
 
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.15;}}
@@ -57,18 +66,31 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 </head>
 <body>
 
+<!-- OVERLAY -->
 <div id="overlay">
   <h1>DVC</h1>
   <div class="sub">Darkroom Vocal Controller</div>
-  <div class="tap">Tap to activate</div>
-  <div class="hint">
+  <div class="lang-btns">
+    <button class="lang-btn" id="btn-en">Activate in English</button>
+    <button class="lang-btn" id="btn-it">Attiva in Italiano</button>
+  </div>
+  <div class="hint" id="hint-en">
     <span>DRY</span> / <span>WET</span> — select area<br>
     <span>SET [NAME] [TIME]</span> — add interval, repeat to chain<br>
     <span>GO</span> — start &nbsp;·&nbsp; <span>BACK</span> — stop and rewind<br>
-    <span>[interval name]</span> — jump to interval
+    <span>[interval name]</span> — jump to interval &nbsp;·&nbsp; <span>CLEAR</span> — reset
+  </div>
+  <div class="hint" id="hint-it" style="display:none">
+    <span>SECCA</span> / <span>UMIDA</span> — seleziona area di lavoro<br>
+    <span>IMPOSTA [NOME] [TEMPO]</span> — aggiungi un intervallo (minuti, secondi)<br>
+    <span>AVANTI</span> — avvia l'intervallo<br>
+    <span>INDIETRO</span> — interrompi e torna all'inizio · torna all'intervallo precedente<br>
+    <span>CANCELLA</span> — cancella gli intervalli impostati<br>
+    <span>[NOME]</span> — vai all'intervallo
   </div>
 </div>
 
+<!-- APP -->
 <div id="app">
   <div>
     <div id="area-name">—</div>
@@ -90,9 +112,90 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <div id="btn-panel"></div>
 
 <script>
-// ════════════════════════════════════════════════
-//  AUDIO
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  LANGUAGE
+// ══════════════════════════════════════════════════
+var LANG = 'en'; // 'en' | 'it'
+
+// All user-facing strings
+var T = {
+  en: {
+    asr:         'en-US',
+    tts:         'en-US',
+    listening:   'listening…',
+    micDenied:   'mic denied — use buttons',
+    noSpeech:    'speech not supported',
+    selectArea:  'select an area first',
+    invalidTime: 'invalid time',
+    noIntervals: 'no intervals set',
+    ready:       'ready',
+    done:        'done',
+    clear:       'cleared',
+    back:        'back',
+    go:          'go',
+    // area display names (spoken + shown)
+    dry:         'dry',
+    wet:         'wet',
+    // interval fallback name
+    interval:    'interval',
+    // mode labels
+    idle:        'IDLE',
+    running:     'RUNNING',
+    stopped:     'STOPPED',
+    // button panel labels
+    btns:        ['DRY','WET','GO','BACK','CLEAR']
+  },
+  it: {
+    asr:         'it-IT',
+    tts:         'it-IT',
+    listening:   'in ascolto…',
+    micDenied:   'microfono negato — usa i tasti',
+    noSpeech:    'riconoscimento non supportato',
+    selectArea:  'seleziona prima una vasca',
+    invalidTime: 'tempo non valido',
+    noIntervals: 'nessun intervallo impostato',
+    ready:       'pronto',
+    done:        'completato',
+    clear:       'cancellato',
+    back:        'indietro',
+    go:          'avanti',
+    dry:         'secca',
+    wet:         'umida',
+    interval:    'intervallo',
+    idle:        'IDLE',
+    running:     'IN CORSO',
+    stopped:     'FERMO',
+    btns:        ['SECCA','UMIDA','AVANTI','INDIETRO','CANCELLA']
+  }
+};
+
+function t(key){ return T[LANG][key] || T['en'][key] || key; }
+
+// Command words per language — maps normalized spoken word → internal action
+var CMDS = {
+  en: {
+    dry:      'dry',
+    wet:      'wet',
+    set:      'set',
+    go:       'go',
+    back:     'back',
+    clear:    'clear'
+  },
+  it: {
+    secca:    'dry',
+    umida:    'wet',
+    imposta:  'set',
+    avanti:   'go',
+    indietro: 'back',
+    cancella: 'clear'
+  }
+};
+
+function resolveCmd(word){ return CMDS[LANG][word] || null; }
+
+// ══════════════════════════════════════════════════
+//  AUDIO  — all volumes raised, balanced
+// ══════════════════════════════════════════════════
 var _ctx = null;
 function ac(){
   if(!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -100,43 +203,32 @@ function ac(){
   return _ctx;
 }
 function tone(freq, dur, vol, type){
-  vol = vol||0.3; type = type||'sine';
-  var c=ac(), o=c.createOscillator(), g=c.createGain();
+  vol = vol || 0.5; type = type || 'sine';
+  var c = ac(), o = c.createOscillator(), g = c.createGain();
   o.connect(g); g.connect(c.destination);
-  o.type=type; o.frequency.value=freq;
+  o.type = type; o.frequency.value = freq;
   g.gain.setValueAtTime(vol, c.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
-  o.start(); o.stop(c.currentTime+dur);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  o.start(); o.stop(c.currentTime + dur);
 }
 
 var snd = {
-  // Light tick every second
-  tick: function(){ tone(480, 0.03, 0.08); },
-
-  // 30-second mark: two short mid-tone pips
+  tick:    function(){ tone(520, 0.04, 0.18); },
   halfMin: function(){
-    tone(660, 0.07, 0.22);
-    setTimeout(function(){ tone(660, 0.07, 0.22); }, 140);
+    tone(700, 0.09, 0.45);
+    setTimeout(function(){ tone(700, 0.09, 0.45); }, 160);
   },
-
-  // 1-minute mark: single longer higher tone
-  minute: function(){
-    tone(900, 0.22, 0.38);
-  },
-
-  // End of interval: three ascending tones
-  end: function(){
-    tone(1100, 0.18, 0.50);
-    setTimeout(function(){ tone(1100, 0.18, 0.50); }, 240);
-    setTimeout(function(){ tone(1450, 0.32, 0.65); }, 480);
+  minute:  function(){ tone(960, 0.28, 0.60); },
+  end:     function(){
+    tone(1100, 0.20, 0.70);
+    setTimeout(function(){ tone(1100, 0.20, 0.70); }, 250);
+    setTimeout(function(){ tone(1500, 0.38, 0.85); }, 500);
   }
 };
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  SPEECH SYNTHESIS
-//  say() pauses mic, speaks, restarts mic after.
-//  Queue prevents race conditions.
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 var _sayQueue = [];
 var _sayBusy  = false;
 
@@ -151,10 +243,12 @@ function _sayNext(){
   var text = _sayQueue.shift();
   recAbortForTTS();
   var u = new SpeechSynthesisUtterance(text);
-  u.lang = 'en-US'; u.rate = 0.9; u.pitch = 0.8; u.volume = 1;
+  u.lang   = t('tts');
+  u.rate   = 0.92;
+  u.pitch  = 0.85;
+  u.volume = 1;
   u.onend = u.onerror = function(){
     setTimeout(function(){
-      // Clear _sayBusy FIRST so recResumeAfterTTS can proceed
       _sayBusy = false;
       if(_sayQueue.length){ _sayBusy = true; _sayNext(); }
       else { recResumeAfterTTS(); }
@@ -164,23 +258,23 @@ function _sayNext(){
   speechSynthesis.speak(u);
 }
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  STATE
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 var S = {
-  area:null, seqs:{dry:[],wet:[]}, mode:'idle',
-  idx:0, elapsed:0, _tim:null, _wall:0, _base:0
+  area: null, seqs: { dry:[], wet:[] }, mode: 'idle',
+  idx: 0, elapsed: 0, _tim: null, _wall: 0, _base: 0
 };
 
-// ════════════════════════════════════════════════
-//  TIME PARSING — Italian + English
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+//  TIME PARSING  — Italian + English number words
+// ══════════════════════════════════════════════════
 var RE_MIN = /^(m|min|mins|minute|minutes|minuto|minuti)$/;
 var RE_SEC = /^(s|sec|secs|second|seconds|secondo|secondi)$/;
-var RE_CON = /^(and|e|virgola|più)$/;
+var RE_CON = /^(and|e|virgola|più|and)$/;
 
-// Number words → integer (Italian + English)
 var NUM_WORDS = {
+  // Italian
   zero:0, un:1, uno:1, una:1, due:2, tre:3, quattro:4, cinque:5,
   sei:6, sette:7, otto:8, nove:9, dieci:10, undici:11, dodici:12,
   tredici:13, quattordici:14, quindici:15, sedici:16, diciassette:17,
@@ -191,22 +285,17 @@ var NUM_WORDS = {
   trentacinque:35, trentasei:36, trentasette:37, trentotto:38, trentanove:39,
   quaranta:40, quarantacinque:45, cinquanta:50, cinquantacinque:55,
   sessanta:60,
+  // English
   one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
   ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15,
   sixteen:16, seventeen:17, eighteen:18, nineteen:19,
-  twenty:20, thirty:30, forty:40, fifty:50, sixty:60,
-  // iOS en-US often keeps Italian words verbatim or approximates them:
-  do:2, doo:2, tray:3, quatro:4, say:6, setti:7, novi:9,
-  vente:20, trente:30, quarante:40, cinquante:50
+  twenty:20, thirty:30, forty:40, fifty:50, sixty:60
 };
 
 function toNum(w){ return NUM_WORDS.hasOwnProperty(w) ? NUM_WORDS[w] : null; }
 
 function normalizeWords(words){
-  return words.map(function(w){
-    var n = toNum(w);
-    return (n !== null) ? String(n) : w;
-  });
+  return words.map(function(w){ var n=toNum(w); return n!==null ? String(n) : w; });
 }
 
 function isTimeish(t){
@@ -224,40 +313,47 @@ function parseDur(words){
       if(i+1 < words.length && RE_MIN.test(words[i+1])){ mi=v; i+=2; ok=true; }
       else if(i+1 < words.length && RE_SEC.test(words[i+1])){ se=v; i+=2; ok=true; }
       else if(i+1 < words.length && /^\d+$/.test(words[i+1])){ mi=v; se=+words[i+1]; i+=2; ok=true; }
-      else if(ok){ se=v; i++; }      // second bare number = seconds
-      else { mi=v; i++; ok=true; }  // first bare number = minutes
+      else if(ok){ se=v; i++; }
+      else { mi=v; i++; ok=true; }
     } else { i++; }
   }
   return ok ? mi*60+se : null;
 }
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  UI
-// ════════════════════════════════════════════════
-function setHeard(t){ document.getElementById('heard').textContent = t||'—'; }
+// ══════════════════════════════════════════════════
+function setHeard(txt){ document.getElementById('heard').textContent = txt || '—'; }
 
 var _flashTO = null;
 function flash(txt){
   var el = document.getElementById('cmd-flash');
   el.textContent = txt; el.classList.add('show');
   clearTimeout(_flashTO);
-  _flashTO = setTimeout(function(){ el.classList.remove('show'); }, 900);
+  _flashTO = setTimeout(function(){ el.classList.remove('show'); }, 950);
 }
 
 function fmt(s){
   s = Math.max(0, Math.floor(s));
-  var m=Math.floor(s/60), r=s%60;
+  var m = Math.floor(s/60), r = s%60;
   return (m<10?'0':'')+m+"'"+(r<10?'0':'')+r+"''";
 }
 
-function render(){ renderFull(); }
+function modeLabel(){
+  var m = S.mode;
+  if(m === 'running') return t('running');
+  if(m === 'stopped') return t('stopped');
+  return t('idle');
+}
 
 function renderFull(){
   var seq = S.area ? S.seqs[S.area] : [], item = seq[S.idx];
-  document.getElementById('area-name').textContent = S.area ? S.area.toUpperCase() : '—';
+  // Area name: show translated label
+  var areaLabel = S.area ? t(S.area).toUpperCase() : '—';
+  document.getElementById('area-name').textContent = areaLabel;
   var meta = document.getElementById('meta');
   var pos = seq.length > 0 ? (S.idx+1)+' / '+seq.length : '';
-  meta.textContent = S.mode.toUpperCase() + (pos ? '  '+pos : '');
+  meta.textContent = modeLabel() + (pos ? '  '+pos : '');
   meta.className = S.mode==='running' ? 'running' : '';
   _renderTimer(item);
   document.getElementById('sequence').innerHTML = seq.map(function(s,i){
@@ -268,21 +364,18 @@ function renderFull(){
       +'<span class="step-dur">'+fmt(s.duration)+'</span></div>';
   }).join('');
 }
+function render(){ renderFull(); }
 
 function _renderTimer(item){
   document.getElementById('timer').textContent = fmt(item ? item.duration - S.elapsed : 0);
-  var pct = (item && item.duration > 0) ? Math.min(100, (S.elapsed/item.duration)*100) : 0;
+  var pct = (item && item.duration > 0) ? Math.min(100,(S.elapsed/item.duration)*100) : 0;
   document.getElementById('progress-fill').style.width = pct+'%';
   document.getElementById('progress-head').style.left = pct+'%';
 }
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  TIMER
-//  Beep logic per second:
-//    s % 60 === 0  →  minute beep (priority)
-//    s % 30 === 0  →  half-minute beep
-//    otherwise     →  tick
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 function clearTim(){ if(S._tim){ clearInterval(S._tim); S._tim=null; } }
 
 function startTimer(){
@@ -303,11 +396,11 @@ function startTimer(){
           if(nxt < seq.length){
             S.idx = nxt; S.elapsed = 0; S.mode = 'ready';
             (function(nm){
-              setTimeout(function(){ say(nm); flash('READY'); renderFull(); }, 900);
-            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : 'interval '+(nxt+1));
+              setTimeout(function(){ say(nm); flash(t('ready').toUpperCase()); renderFull(); }, 900);
+            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : t('interval')+' '+(nxt+1));
           } else {
             S.elapsed = 0; S.mode = 'idle';
-            setTimeout(function(){ say('done'); flash('DONE'); renderFull(); }, 900);
+            setTimeout(function(){ say(t('done')); flash(t('done').toUpperCase()); renderFull(); }, 900);
           }
           renderFull(); return;
         }
@@ -317,109 +410,104 @@ function startTimer(){
       }
       S.elapsed = el; prev = el;
     }
-    _renderTimer(seq[S.idx]);
+    _renderTimer(S.seqs[S.area][S.idx]);
   }, 250);
 }
 
-function stopTim(){ clearTim(); if(S.mode === 'running') S.mode = 'stopped'; }
+function stopTim(){ clearTim(); if(S.mode==='running') S.mode='stopped'; }
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  COMMAND HANDLER
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 function handle(transcript){
   var raw = transcript.trim();
   if(!raw) return;
-  // Normalize: lowercase, strip punctuation/commas, collapse spaces
   var lo = raw.toLowerCase()
-              .replace(/[,;.:'''"]/g, ' ')
-              .replace(/\s+/g, ' ').trim();
+              .replace(/[,;.:'''"]/g,' ')
+              .replace(/\s+/g,' ').trim();
   var words = lo.split(' ').filter(Boolean);
   if(!words.length) return;
   setHeard(raw);
 
-  // ── DRY / WET ──────────────────────────────
-  if(words[0]==='dry' || words[0]==='wet'){
-    var a = words[0];
+  var cmd = resolveCmd(words[0]);
+
+  // ── DRY / WET (secca / umida) ──
+  if(cmd === 'dry' || cmd === 'wet'){
     stopTim();
-    S.area = a; S.idx = 0; S.elapsed = 0;
-    S.mode = S.seqs[a].length > 0 ? 'ready' : 'idle';
-    flash(a.toUpperCase()); say(a); render(); return;
+    S.area = cmd; S.idx = 0; S.elapsed = 0;
+    S.mode = S.seqs[cmd].length > 0 ? 'ready' : 'idle';
+    flash(t(cmd).toUpperCase()); say(t(cmd)); renderFull(); return;
   }
 
-  // ── SET ─────────────────────────────────────
-  if(words[0]==='set'){
-    if(!S.area){ say('select an area first'); return; }
-    var rest = words.slice(1);
-    var name = null, timeW = rest;
+  // ── SET (imposta) ──
+  if(cmd === 'set'){
+    if(!S.area){ say(t('selectArea')); return; }
+    var rest = words.slice(1), name = null, timeW = rest;
     if(rest.length > 0 && !isTimeish(rest[0])){
       name = rest[0].toUpperCase();
       timeW = rest.slice(1);
     }
     var dur = parseDur(timeW);
-    if(!dur || dur <= 0){ say('invalid time'); return; }
+    if(!dur || dur <= 0){ say(t('invalidTime')); return; }
     S.seqs[S.area].push({ name:name, duration:dur });
     S.mode = 'ready';
     var fb = name ? 'set '+name.toLowerCase() : 'set';
-    flash(fb.toUpperCase()); say(fb); render(); return;
+    flash(fb.toUpperCase()); say(fb); renderFull(); return;
   }
 
-  // ── GO ──────────────────────────────────────
-  if(words[0]==='go'){
-    if(!S.area){ say('select an area first'); return; }
+  // ── GO (avanti) ──
+  if(cmd === 'go'){
+    if(!S.area){ say(t('selectArea')); return; }
     var seq = S.seqs[S.area];
-    if(!seq.length){ say('no intervals set'); return; }
-    if(S.idx >= seq.length){ S.idx = 0; S.elapsed = 0; }
-    flash('GO'); say('go'); startTimer(); render(); return;
+    if(!seq.length){ say(t('noIntervals')); return; }
+    if(S.idx >= seq.length){ S.idx=0; S.elapsed=0; }
+    flash('GO'); say(t('go')); startTimer(); renderFull(); return;
   }
 
-  // ── BACK — stop + rewind ─────────────────────
-  if(words[0]==='back'){
+  // ── BACK (indietro) ──
+  if(cmd === 'back'){
     if(!S.area) return;
     stopTim();
-    if(S.elapsed > 0){
-      S.elapsed = 0; S.mode = 'ready';
-    } else if(S.idx > 0){
-      S.idx--; S.elapsed = 0; S.mode = 'ready';
-    }
+    if(S.elapsed > 0){ S.elapsed=0; S.mode='ready'; }
+    else if(S.idx > 0){ S.idx--; S.elapsed=0; S.mode='ready'; }
     var cur = S.seqs[S.area][S.idx];
-    flash('BACK');
-    say(cur && cur.name ? cur.name.toLowerCase() : 'back');
-    render(); return;
+    flash(t('back').toUpperCase());
+    say(cur && cur.name ? cur.name.toLowerCase() : t('back'));
+    renderFull(); return;
   }
 
-  // ── CLEAR ───────────────────────────────────
-  if(words[0]==='clear'){
+  // ── CLEAR (cancella) ──
+  if(cmd === 'clear'){
     if(!S.area) return;
     stopTim();
-    S.seqs[S.area] = []; S.idx = 0; S.elapsed = 0; S.mode = 'idle';
-    flash('CLEAR'); say('clear'); render(); return;
+    S.seqs[S.area]=[]; S.idx=0; S.elapsed=0; S.mode='idle';
+    flash('CLEAR'); say(t('clear')); renderFull(); return;
   }
 
-  // ── NAMED INTERVAL JUMP ─────────────────────
+  // ── NAMED INTERVAL JUMP ──
   if(S.area){
     var q = words.join(' ').toUpperCase();
     var seqA = S.seqs[S.area], fi = -1;
-    for(var i = 0; i < seqA.length; i++){
-      if(seqA[i].name && seqA[i].name === q){ fi = i; break; }
+    for(var i=0; i<seqA.length; i++){
+      if(seqA[i].name && seqA[i].name === q){ fi=i; break; }
     }
     if(fi >= 0){
-      stopTim(); S.idx = fi; S.elapsed = 0; S.mode = 'ready';
-      flash(seqA[fi].name); say(seqA[fi].name.toLowerCase()); render(); return;
+      stopTim(); S.idx=fi; S.elapsed=0; S.mode='ready';
+      flash(seqA[fi].name); say(seqA[fi].name.toLowerCase()); renderFull(); return;
     }
   }
 }
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  SPEECH RECOGNITION
-//  Safari rules:
-//  - continuous=false, loop via onend
-//  - Recreate SR object each session (Safari leaks)
-//  - Abort before TTS, restart after
-//  - _sayBusy gate: never start while speaking
-// ════════════════════════════════════════════════
-var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+//  - continuous=true  on Chrome/Android (reliable)
+//  - continuous=false on Safari/iOS (restart loop)
+//  - Recreate object each session on Safari
+// ══════════════════════════════════════════════════
+var SR       = window.SpeechRecognition || window.webkitSpeechRecognition;
 var _isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 var _isIOS    = /iP(hone|ad|od)/i.test(navigator.userAgent);
+var _isAndroid = /android/i.test(navigator.userAgent);
 
 var _recEnabled = false;
 var _recLive    = false;
@@ -435,40 +523,41 @@ function recAbortForTTS(){
 }
 
 function recResumeAfterTTS(){
-  if(_recEnabled) _schedRec(_isSafari ? 100 : 50);
+  if(_recEnabled) _schedRec(_isSafari ? 120 : 60);
 }
 
 function _schedRec(ms){
   clearTimeout(_recTO);
-  _recTO = setTimeout(function(){ _startRec(); }, ms || 0);
+  _recTO = setTimeout(_startRec, ms || 0);
 }
 
 function _startRec(){
   if(!SR || !_recEnabled || _recLive) return;
   var r = new SR();
-  r.continuous     = false;
+  // Chrome/Android: continuous works well; Safari/iOS: false + restart loop
+  r.continuous     = (_isSafari || _isIOS) ? false : true;
   r.interimResults = false;
-  r.lang           = 'en-US';
+  r.lang           = t('asr');
 
-  r.onstart = function(){ _recLive = true;  _micOn(); };
+  r.onstart = function(){ _recLive=true;  _micOn(); };
 
   r.onend = function(){
     _recLive = false; _micOff();
-    if(_recEnabled && !_sayBusy) _schedRec(_isSafari ? 400 : 100);
+    if(_recEnabled && !_sayBusy) _schedRec(_isSafari ? 420 : 120);
   };
 
   r.onerror = function(e){
     _recLive = false; _micOff();
-    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
-      setHeard('mic denied — use buttons');
+    if(e.error==='not-allowed' || e.error==='service-not-allowed'){
+      setHeard(t('micDenied'));
       document.getElementById('btn-panel').style.display = 'grid';
       _recEnabled = false; return;
     }
-    if(_recEnabled && !_sayBusy) _schedRec(_isSafari ? 700 : 300);
+    if(_recEnabled && !_sayBusy) _schedRec(_isSafari ? 650 : 300);
   };
 
   r.onresult = function(e){
-    var last = e.results[e.results.length - 1];
+    var last = e.results[e.results.length-1];
     handle(last[0].transcript);
   };
 
@@ -478,49 +567,60 @@ function _startRec(){
 
 function initRec(){
   if(!SR){
-    setHeard('speech not supported');
+    setHeard(t('noSpeech'));
     document.getElementById('btn-panel').style.display = 'grid';
     return;
   }
+  setHeard(t('listening'));
   _recEnabled = true;
-  setHeard('listening…');
   _schedRec(200);
 }
 
-// ════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  BUTTON PANEL FALLBACK
-// ════════════════════════════════════════════════
-(function(){
-  var cmds = ['DRY','WET','GO','BACK','CLEAR'];
+// ══════════════════════════════════════════════════
+function buildButtons(){
+  var cmds = t('btns');
+  // internal actions map to lang-specific spoken words
+  var actions = LANG === 'it'
+    ? ['secca','umida','avanti','indietro','cancella']
+    : ['dry','wet','go','back','clear'];
   var p = document.getElementById('btn-panel');
-  cmds.forEach(function(c){
+  p.innerHTML = '';
+  cmds.forEach(function(label, i){
     var b = document.createElement('button');
-    b.textContent = c;
-    b.addEventListener('click', function(){ handle(c.toLowerCase()); });
+    b.textContent = label;
+    b.addEventListener('click', function(){ handle(actions[i]); });
     p.appendChild(b);
   });
-})();
+}
 
-// ════════════════════════════════════════════════
-//  BOOT
-// ════════════════════════════════════════════════
-document.getElementById('overlay').addEventListener('click', function(){
+// ══════════════════════════════════════════════════
+//  BOOT — language selection
+// ══════════════════════════════════════════════════
+function activate(lang){
+  LANG = lang;
+
+  // Unlock AudioContext
   _ctx = new (window.AudioContext || window.webkitAudioContext)();
   if(_ctx.state === 'suspended') _ctx.resume();
 
-  // iOS TTS: voices load asynchronously; trigger load now so first say() isn't silent
+  // iOS TTS warm-up: silent utterance to unlock audio session
   if(window.speechSynthesis){
     speechSynthesis.getVoices();
-    // Warm-up: speak an empty utterance to unlock the audio session on iOS
     var warm = new SpeechSynthesisUtterance(' ');
-    warm.volume = 0; warm.lang = 'en-US';
+    warm.volume = 0; warm.lang = t('tts');
     speechSynthesis.speak(warm);
   }
 
   document.getElementById('overlay').style.display = 'none';
+  buildButtons();
   initRec();
   renderFull();
-}, { once: true });
+}
+
+document.getElementById('btn-en').addEventListener('click', function(){ activate('en'); });
+document.getElementById('btn-it').addEventListener('click', function(){ activate('it'); });
 
 renderFull();
 </script>
