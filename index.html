@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -15,7 +15,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #overlay h1{font-family:'VT323',monospace;font-size:clamp(3rem,14vw,5.5rem);letter-spacing:0.3em;color:var(--r2);font-weight:400;}
 #overlay .sub{font-size:0.65rem;letter-spacing:0.45em;color:var(--r3);text-transform:uppercase;}
 #overlay .tap{font-size:0.75rem;letter-spacing:0.45em;color:var(--r);text-transform:uppercase;margin-top:2.5rem;animation:blink 1.4s ease-in-out infinite;}
-#overlay .hint{margin-top:2.5rem;font-size:0.58rem;letter-spacing:0.18em;color:var(--r3);line-height:2.4;text-align:center;text-transform:uppercase;}
+#overlay .hint{margin-top:2.5rem;font-size:0.58rem;letter-spacing:0.15em;color:var(--r3);line-height:2.5;text-align:center;text-transform:uppercase;}
 #overlay .hint span{color:var(--r2);}
 
 #app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto auto 1fr;padding:1.2rem 1.5rem 5.5rem;}
@@ -48,7 +48,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #cmd-flash{font-size:0.65rem;letter-spacing:0.22em;color:var(--r);text-transform:uppercase;flex-shrink:0;opacity:0;transition:opacity 0.1s;}
 #cmd-flash.show{opacity:1;}
 
-#btn-panel{display:none;position:fixed;bottom:2.9rem;left:0;right:0;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--r4);border-top:1px solid var(--r3);}
+#btn-panel{display:none;position:fixed;bottom:2.9rem;left:0;right:0;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--r4);border-top:1px solid var(--r3);}
 #btn-panel button{background:var(--bg);border:none;color:var(--r2);font-family:'Share Tech Mono',monospace;font-size:0.56rem;letter-spacing:0.16em;padding:0.65rem 0.2rem;cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
 #btn-panel button:active{background:var(--r4);color:var(--r);}
 
@@ -60,13 +60,13 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <div id="overlay">
   <h1>DVC</h1>
   <div class="sub">Darkroom Vocal Controller</div>
-  <div class="tap">Tap to activate</div>
+  <div class="tap">Tocca per attivare</div>
   <div class="hint">
-    <span>Dry</span> / <span>Wet</span> — select area<br>
-    <span>Set [name] 1 30</span> — add interval (1 min 30 sec)<br>
-    <span>Then</span> + <span>Set…</span> — chain intervals<br>
-    <span>Go</span> — start &nbsp;·&nbsp; <span>Stop</span> — pause &nbsp;·&nbsp; <span>Back</span> — rewind<br>
-    <span>[interval name]</span> — jump to that interval
+    <span>Dry</span> / <span>Wet</span> — seleziona area<br>
+    <span>Set [nome] 1 30</span> — aggiungi intervallo<br>
+    <span>Poi</span> + <span>Set…</span> — concatena intervalli<br>
+    <span>Go / Via</span> — avvia &nbsp;·&nbsp; <span>Back / Indietro</span> — ferma e torna<br>
+    <span>[nome intervallo]</span> — salta a quell'intervallo
   </div>
 </div>
 
@@ -109,20 +109,34 @@ function tone(freq, dur, vol, type){
   g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
   o.start(); o.stop(c.currentTime+dur);
 }
+
 var snd = {
-  tick:   function(){ tone(500,0.04,0.10); },
-  minute: function(){ tone(820,0.18,0.28); },
-  end:    function(){
-    tone(1100,0.20,0.50);
-    setTimeout(function(){ tone(1100,0.20,0.50); },260);
-    setTimeout(function(){ tone(1450,0.38,0.65); },520);
+  // Light tick every second
+  tick: function(){ tone(480, 0.03, 0.08); },
+
+  // 30-second mark: two short mid-tone pips
+  halfMin: function(){
+    tone(660, 0.07, 0.22);
+    setTimeout(function(){ tone(660, 0.07, 0.22); }, 140);
+  },
+
+  // 1-minute mark: single longer higher tone
+  minute: function(){
+    tone(900, 0.22, 0.38);
+  },
+
+  // End of interval: three ascending tones
+  end: function(){
+    tone(1100, 0.18, 0.50);
+    setTimeout(function(){ tone(1100, 0.18, 0.50); }, 240);
+    setTimeout(function(){ tone(1450, 0.32, 0.65); }, 480);
   }
 };
 
 // ════════════════════════════════════════════════
 //  SPEECH SYNTHESIS
-//  say() pauses the mic, speaks, then re-enables it.
-//  A queue avoids race conditions between consecutive calls.
+//  say() pauses mic, speaks, restarts mic after.
+//  Queue prevents race conditions.
 // ════════════════════════════════════════════════
 var _sayQueue = [];
 var _sayBusy  = false;
@@ -138,10 +152,10 @@ function _sayNext(){
   var text = _sayQueue.shift();
   recAbortForTTS();
   var u = new SpeechSynthesisUtterance(text);
-  u.lang='en-US'; u.rate=0.9; u.pitch=0.8; u.volume=1;
+  u.lang = 'it-IT'; u.rate = 0.9; u.pitch = 0.8; u.volume = 1;
   u.onend = u.onerror = function(){
     setTimeout(function(){
-      // Must clear _sayBusy BEFORE recResumeAfterTTS/recStart checks it
+      // Clear _sayBusy FIRST so recResumeAfterTTS can proceed
       _sayBusy = false;
       if(_sayQueue.length){ _sayBusy = true; _sayNext(); }
       else { recResumeAfterTTS(); }
@@ -160,23 +174,56 @@ var S = {
 };
 
 // ════════════════════════════════════════════════
-//  HELPERS
+//  TIME PARSING — Italian + English
 // ════════════════════════════════════════════════
-function fmt(s){
-  s = Math.max(0,Math.floor(s));
-  var m=Math.floor(s/60), r=s%60;
-  return (m<10?'0':'')+m+"'"+(r<10?'0':'')+r+"''";
+var RE_MIN = /^(m|min|mins|minute|minutes|minuto|minuti)$/;
+var RE_SEC = /^(s|sec|secs|second|seconds|secondo|secondi)$/;
+var RE_CON = /^(and|e|virgola|più)$/;
+
+// Number words → integer (Italian + English)
+var NUM_WORDS = {
+  zero:0, un:1, uno:1, una:1, due:2, tre:3, quattro:4, cinque:5,
+  sei:6, sette:7, otto:8, nove:9, dieci:10, undici:11, dodici:12,
+  tredici:13, quattordici:14, quindici:15, sedici:16, diciassette:17,
+  diciotto:18, diciannove:19, venti:20, ventuno:21, ventidue:22,
+  ventitre:23, ventitré:23, ventiquattro:24, venticinque:25,
+  ventisei:26, ventisette:27, ventotto:28, ventinove:29,
+  trenta:30, trentuno:31, trentadue:32, trentatre:33, trentaquattro:34,
+  trentacinque:35, trentasei:36, trentasette:37, trentotto:38, trentanove:39,
+  quaranta:40, quarantacinque:45, cinquanta:50, cinquantacinque:55,
+  sessanta:60,
+  one:1, two:2, three:3, four:4, five:5, six:6, seven:7, eight:8, nine:9,
+  ten:10, eleven:11, twelve:12, thirteen:13, fourteen:14, fifteen:15,
+  sixteen:16, seventeen:17, eighteen:18, nineteen:19,
+  twenty:20, thirty:30, forty:40, fifty:50, sixty:60
+};
+
+function toNum(w){ return NUM_WORDS.hasOwnProperty(w) ? NUM_WORDS[w] : null; }
+
+function normalizeWords(words){
+  return words.map(function(w){
+    var n = toNum(w);
+    return (n !== null) ? String(n) : w;
+  });
 }
-function isTimeish(t){ return /^\d+$/.test(t)||/^(min|minute|minutes|sec|second|seconds|and)$/.test(t); }
+
+function isTimeish(t){
+  return /^\d+$/.test(t) || RE_MIN.test(t) || RE_SEC.test(t) ||
+         RE_CON.test(t) || toNum(t) !== null;
+}
+
 function parseDur(words){
-  var mi=0,se=0,ok=false,i=0;
-  while(i<words.length){
+  words = normalizeWords(words);
+  var mi=0, se=0, ok=false, i=0;
+  while(i < words.length){
+    if(RE_CON.test(words[i])){ i++; continue; }
     if(/^\d+$/.test(words[i])){
-      var v=+words[i];
-      if(i+1<words.length && /^(min|minute|minutes)$/.test(words[i+1])){ mi=v;i+=2;ok=true; }
-      else if(i+1<words.length && /^(sec|second|seconds)$/.test(words[i+1])){ se=v;i+=2;ok=true; }
-      else if(i+1<words.length && /^\d+$/.test(words[i+1])){ mi=v;se=+words[i+1];i+=2;ok=true; }
-      else{ se+=v;i++;ok=true; }
+      var v = +words[i];
+      if(i+1 < words.length && RE_MIN.test(words[i+1])){ mi=v; i+=2; ok=true; }
+      else if(i+1 < words.length && RE_SEC.test(words[i+1])){ se=v; i+=2; ok=true; }
+      else if(i+1 < words.length && /^\d+$/.test(words[i+1])){ mi=v; se=+words[i+1]; i+=2; ok=true; }
+      else if(ok){ se=v; i++; }      // second bare number = seconds
+      else { mi=v; i++; ok=true; }  // first bare number = minutes
     } else { i++; }
   }
   return ok ? mi*60+se : null;
@@ -185,29 +232,35 @@ function parseDur(words){
 // ════════════════════════════════════════════════
 //  UI
 // ════════════════════════════════════════════════
-function setHeard(t){ document.getElementById('heard').textContent=t||'—'; }
+function setHeard(t){ document.getElementById('heard').textContent = t||'—'; }
 
-var _flashTO=null;
+var _flashTO = null;
 function flash(txt){
-  var el=document.getElementById('cmd-flash');
-  el.textContent=txt; el.classList.add('show');
+  var el = document.getElementById('cmd-flash');
+  el.textContent = txt; el.classList.add('show');
   clearTimeout(_flashTO);
-  _flashTO=setTimeout(function(){ el.classList.remove('show'); },900);
+  _flashTO = setTimeout(function(){ el.classList.remove('show'); }, 900);
+}
+
+function fmt(s){
+  s = Math.max(0, Math.floor(s));
+  var m=Math.floor(s/60), r=s%60;
+  return (m<10?'0':'')+m+"'"+(r<10?'0':'')+r+"''";
 }
 
 function render(){
-  var seq=S.area?S.seqs[S.area]:[], item=seq[S.idx];
-  document.getElementById('area-name').textContent=S.area?S.area.toUpperCase():'—';
-  var meta=document.getElementById('meta');
-  var pos=seq.length>0?(S.idx+1)+' / '+seq.length:'';
-  meta.textContent=S.mode.toUpperCase()+(pos?'  '+pos:'');
-  meta.className=S.mode==='running'?'running':'';
-  document.getElementById('timer').textContent=fmt(item?item.duration-S.elapsed:0);
-  var pct=(item&&item.duration>0)?Math.min(100,(S.elapsed/item.duration)*100):0;
-  document.getElementById('progress-fill').style.width=pct+'%';
-  document.getElementById('progress-head').style.left=pct+'%';
-  document.getElementById('sequence').innerHTML=seq.map(function(s,i){
-    var cls=i===S.idx?'current':i<S.idx?'past':'';
+  var seq = S.area ? S.seqs[S.area] : [], item = seq[S.idx];
+  document.getElementById('area-name').textContent = S.area ? S.area.toUpperCase() : '—';
+  var meta = document.getElementById('meta');
+  var pos = seq.length > 0 ? (S.idx+1)+' / '+seq.length : '';
+  meta.textContent = S.mode.toUpperCase() + (pos ? '  '+pos : '');
+  meta.className = S.mode==='running' ? 'running' : '';
+  document.getElementById('timer').textContent = fmt(item ? item.duration - S.elapsed : 0);
+  var pct = (item && item.duration > 0) ? Math.min(100, (S.elapsed/item.duration)*100) : 0;
+  document.getElementById('progress-fill').style.width = pct+'%';
+  document.getElementById('progress-head').style.left = pct+'%';
+  document.getElementById('sequence').innerHTML = seq.map(function(s,i){
+    var cls = i===S.idx ? 'current' : i<S.idx ? 'past' : '';
     return '<div class="step '+cls+'"><div class="dot"></div>'
       +'<span class="step-idx">'+(i+1)+'</span>'
       +'<span class="step-name">'+(s.name||'—')+'</span>'
@@ -217,166 +270,208 @@ function render(){
 
 // ════════════════════════════════════════════════
 //  TIMER
+//  Beep logic per second:
+//    s % 60 === 0  →  minute beep (priority)
+//    s % 30 === 0  →  half-minute beep
+//    otherwise     →  tick
 // ════════════════════════════════════════════════
 function clearTim(){ if(S._tim){ clearInterval(S._tim); S._tim=null; } }
 
 function startTimer(){
-  var seq=S.seqs[S.area];
-  if(!seq||S.idx>=seq.length) return;
-  clearTim(); S.mode='running'; S._base=S.elapsed; S._wall=Date.now();
-  var prev=S.elapsed;
-  S._tim=setInterval(function(){
-    var el=S._base+Math.floor((Date.now()-S._wall)/1000);
-    if(el!==prev){
-      var dur=seq[S.idx].duration;
-      for(var s=prev+1;s<=el;s++){
-        if(s>=dur){
-          clearTim(); S.elapsed=dur; snd.end();
-          var nxt=S.idx+1;
-          if(nxt<seq.length){
-            S.idx=nxt; S.elapsed=0; S.mode='ready';
-            (function(nm){ setTimeout(function(){ say(nm); flash('READY'); render(); },800); }
-            )(seq[nxt].name?seq[nxt].name.toLowerCase():'interval '+(nxt+1));
+  var seq = S.seqs[S.area];
+  if(!seq || S.idx >= seq.length) return;
+  clearTim();
+  S.mode = 'running'; S._base = S.elapsed; S._wall = Date.now();
+  var prev = S.elapsed;
+
+  S._tim = setInterval(function(){
+    var el = S._base + Math.floor((Date.now() - S._wall) / 1000);
+    if(el !== prev){
+      var dur = seq[S.idx].duration;
+      for(var s = prev+1; s <= el; s++){
+        if(s >= dur){
+          // Interval complete
+          clearTim(); S.elapsed = dur; snd.end();
+          var nxt = S.idx + 1;
+          if(nxt < seq.length){
+            S.idx = nxt; S.elapsed = 0; S.mode = 'ready';
+            (function(nm){
+              setTimeout(function(){ say(nm); flash('PRONTO'); render(); }, 900);
+            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : 'intervallo '+(nxt+1));
           } else {
-            S.elapsed=0; S.mode='idle';
-            setTimeout(function(){ say('sequence complete'); flash('DONE'); render(); },800);
+            S.elapsed = 0; S.mode = 'idle';
+            setTimeout(function(){ say('sequenza completata'); flash('FINE'); render(); }, 900);
           }
           render(); return;
         }
-        var pMin=Math.floor((s-1)/60),cMin=Math.floor(s/60);
-        if(cMin>pMin&&s>0) snd.minute(); else snd.tick();
+        // Per-second audio feedback
+        if(s > 0 && s % 60 === 0)      snd.minute();
+        else if(s > 0 && s % 30 === 0) snd.halfMin();
+        else                            snd.tick();
       }
-      S.elapsed=el; prev=el;
+      S.elapsed = el; prev = el;
     }
     render();
-  },80);
+  }, 80);
 }
 
-function stopTim(){ clearTim(); if(S.mode==='running') S.mode='stopped'; }
+function stopTim(){ clearTim(); if(S.mode === 'running') S.mode = 'stopped'; }
 
 // ════════════════════════════════════════════════
 //  COMMAND HANDLER
 // ════════════════════════════════════════════════
 function handle(transcript){
-  var raw=transcript.trim();
+  var raw = transcript.trim();
   if(!raw) return;
-  var lo=raw.toLowerCase();
-  var words=lo.split(/\s+/).filter(Boolean);
+  // Normalize: lowercase, strip punctuation/commas, collapse spaces
+  var lo = raw.toLowerCase()
+              .replace(/[,;.:'''"]/g, ' ')
+              .replace(/\s+/g, ' ').trim();
+  var words = lo.split(' ').filter(Boolean);
   if(!words.length) return;
   setHeard(raw);
 
-  if(words[0]==='dry'||words[0]==='wet'){
-    var a=words[0]; stopTim();
-    S.area=a; S.idx=0; S.elapsed=0;
-    S.mode=S.seqs[a].length>0?'ready':'idle';
+  // ── DRY / WET ──────────────────────────────
+  if(words[0]==='dry' || words[0]==='wet'){
+    var a = words[0];
+    stopTim();
+    S.area = a; S.idx = 0; S.elapsed = 0;
+    S.mode = S.seqs[a].length > 0 ? 'ready' : 'idle';
     flash(a.toUpperCase()); say(a); render(); return;
   }
-  if(words[0]==='set'){
-    if(!S.area){ say('select an area first'); return; }
-    var rest=words.slice(1), name=null, timeW=rest;
-    if(rest.length>0&&!isTimeish(rest[0])){ name=rest[0].toUpperCase(); timeW=rest.slice(1); }
-    var dur=parseDur(timeW);
-    if(!dur||dur<=0){ say('invalid time'); return; }
-    S.seqs[S.area].push({name:name,duration:dur}); S.mode='ready';
-    var fb=name?'set '+name.toLowerCase():'set';
+
+  // ── SET / IMPOSTA ───────────────────────────
+  if(words[0]==='set' || words[0]==='imposta'){
+    if(!S.area){ say("seleziona prima un'area"); return; }
+    var rest = words.slice(1);
+    var name = null, timeW = rest;
+    // First word that is not time-related = name
+    if(rest.length > 0 && !isTimeish(rest[0])){
+      name = rest[0].toUpperCase();
+      timeW = rest.slice(1);
+    }
+    var dur = parseDur(timeW);
+    if(!dur || dur <= 0){ say('tempo non valido'); return; }
+    S.seqs[S.area].push({ name:name, duration:dur });
+    S.mode = 'ready';
+    var fb = name ? 'set '+name.toLowerCase() : 'set';
     flash(fb.toUpperCase()); say(fb); render(); return;
   }
-  if(words[0]==='then'){ flash('THEN'); say('then'); return; }
-  if(words[0]==='go'){
-    if(!S.area){ say('select an area first'); return; }
-    var seq=S.seqs[S.area];
-    if(!seq.length){ say('no intervals set'); return; }
-    if(S.idx>=seq.length){ S.idx=0; S.elapsed=0; }
-    flash('GO'); say('go'); startTimer(); render(); return;
+
+  // ── THEN / POI ──────────────────────────────
+  if(words[0]==='then' || words[0]==='poi'){
+    flash('POI'); say('poi'); return;
   }
-  if(words[0]==='stop'){ stopTim(); flash('STOP'); say('stop'); render(); return; }
-  if(words[0]==='back'){
-    if(!S.area) return; stopTim();
-    if(S.elapsed>0){ S.elapsed=0; S.mode='ready'; }
-    else if(S.idx>0){ S.idx--; S.elapsed=0; S.mode='ready'; }
-    var cur=S.seqs[S.area][S.idx];
-    flash('BACK'); say(cur&&cur.name?cur.name.toLowerCase():'back'); render(); return;
+
+  // ── GO / VIA / AVVIA / START ────────────────
+  if(words[0]==='go' || words[0]==='vai' || words[0]==='via' ||
+     words[0]==='avvia' || words[0]==='start'){
+    if(!S.area){ say("seleziona prima un'area"); return; }
+    var seq = S.seqs[S.area];
+    if(!seq.length){ say('nessun intervallo impostato'); return; }
+    if(S.idx >= seq.length){ S.idx = 0; S.elapsed = 0; }
+    flash('GO'); say('via'); startTimer(); render(); return;
   }
-  if(words[0]==='clear'){
-    if(!S.area) return; stopTim();
-    S.seqs[S.area]=[]; S.idx=0; S.elapsed=0; S.mode='idle';
-    flash('CLEAR'); say('clear'); render(); return;
+
+  // ── BACK / INDIETRO — stop + rewind ─────────
+  // First Back: rewind to start of current interval (stop if running)
+  // Second Back (already at start): go to previous interval
+  if(words[0]==='back' || words[0]==='indietro'){
+    if(!S.area) return;
+    stopTim();
+    if(S.elapsed > 0){
+      S.elapsed = 0; S.mode = 'ready';
+    } else if(S.idx > 0){
+      S.idx--; S.elapsed = 0; S.mode = 'ready';
+    }
+    var cur = S.seqs[S.area][S.idx];
+    flash('BACK');
+    say(cur && cur.name ? cur.name.toLowerCase() : 'back');
+    render(); return;
   }
-  // Named interval jump
+
+  // ── CLEAR / CANCELLA ───────────────────────
+  if(words[0]==='clear' || words[0]==='cancella'){
+    if(!S.area) return;
+    stopTim();
+    S.seqs[S.area] = []; S.idx = 0; S.elapsed = 0; S.mode = 'idle';
+    flash('CLEAR'); say('cancellato'); render(); return;
+  }
+
+  // ── NAMED INTERVAL JUMP ─────────────────────
   if(S.area){
-    var q=words.join(' ').toUpperCase(), seqA=S.seqs[S.area], fi=-1;
-    for(var i=0;i<seqA.length;i++){ if(seqA[i].name&&seqA[i].name===q){ fi=i; break; } }
-    if(fi>=0){ stopTim(); S.idx=fi; S.elapsed=0; S.mode='ready'; flash(seqA[fi].name); say(seqA[fi].name.toLowerCase()); render(); return; }
+    var q = words.join(' ').toUpperCase();
+    var seqA = S.seqs[S.area], fi = -1;
+    for(var i = 0; i < seqA.length; i++){
+      if(seqA[i].name && seqA[i].name === q){ fi = i; break; }
+    }
+    if(fi >= 0){
+      stopTim(); S.idx = fi; S.elapsed = 0; S.mode = 'ready';
+      flash(seqA[fi].name); say(seqA[fi].name.toLowerCase()); render(); return;
+    }
   }
 }
 
 // ════════════════════════════════════════════════
 //  SPEECH RECOGNITION
-//  Key Safari rules:
-//  1. continuous=false (more reliable, we loop via onend)
-//  2. Recognition is recreated each session (Safari leaks on reuse)
-//  3. mic is aborted before TTS, restarted after
-//  4. _sayBusy gate prevents restart while speaking
+//  Safari rules:
+//  - continuous=false, loop via onend
+//  - Recreate SR object each session (Safari leaks)
+//  - Abort before TTS, restart after
+//  - _sayBusy gate: never start while speaking
 // ════════════════════════════════════════════════
-var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-var _isSafari=/^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-var _isIOS=/iP(hone|ad|od)/i.test(navigator.userAgent);
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var _isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+var _isIOS    = /iP(hone|ad|od)/i.test(navigator.userAgent);
 
-var _recEnabled=false;   // set true after user tap, false on permission denied
-var _recLive=false;      // true while a session is actively running
-var _recTO=null;         // restart timer
+var _recEnabled = false;
+var _recLive    = false;
+var _recTO      = null;
+var _currentRec = null;
 
-function _micOn(){ document.getElementById('mic-ring').classList.add('on'); }
+function _micOn(){  document.getElementById('mic-ring').classList.add('on'); }
 function _micOff(){ document.getElementById('mic-ring').classList.remove('on'); }
 
 function recAbortForTTS(){
-  // Abort current session without clearing _recEnabled.
-  // Recognition will restart after TTS via recResumeAfterTTS().
   clearTimeout(_recTO);
-  if(_recLive){
-    try{ _currentRec && _currentRec.abort(); }catch(e){}
-  }
+  if(_recLive && _currentRec){ try{ _currentRec.abort(); }catch(e){} }
 }
 
 function recResumeAfterTTS(){
-  if(_recEnabled) _schedRec(_isSafari?100:50);
+  if(_recEnabled) _schedRec(_isSafari ? 100 : 50);
 }
-
-var _currentRec=null;
 
 function _schedRec(ms){
   clearTimeout(_recTO);
-  _recTO=setTimeout(function(){ _startRec(); }, ms||0);
+  _recTO = setTimeout(function(){ _startRec(); }, ms || 0);
 }
 
 function _startRec(){
-  if(!SR||!_recEnabled||_recLive) return;
-  // Recreate the object each time on Safari to avoid state leaks
+  if(!SR || !_recEnabled || _recLive) return;
   var r = new SR();
-  r.continuous = false;   // false on all browsers; onend loop handles continuity
+  r.continuous     = false;
   r.interimResults = false;
-  r.lang = 'en-US';
+  r.lang           = 'it-IT';
 
-  r.onstart = function(){ _recLive=true; _micOn(); };
+  r.onstart = function(){ _recLive = true;  _micOn(); };
 
   r.onend = function(){
-    _recLive=false; _micOff();
-    // Restart unless TTS is currently speaking (it will call recResumeAfterTTS when done)
-    if(_recEnabled && !_sayBusy) _schedRec(_isSafari?400:100);
+    _recLive = false; _micOff();
+    if(_recEnabled && !_sayBusy) _schedRec(_isSafari ? 400 : 100);
   };
 
   r.onerror = function(e){
-    _recLive=false; _micOff();
-    if(e.error==='not-allowed'||e.error==='service-not-allowed'){
-      setHeard('mic denied — use buttons');
-      document.getElementById('btn-panel').style.display='grid';
-      _recEnabled=false; return;
+    _recLive = false; _micOff();
+    if(e.error === 'not-allowed' || e.error === 'service-not-allowed'){
+      setHeard('mic negato — usa i tasti');
+      document.getElementById('btn-panel').style.display = 'grid';
+      _recEnabled = false; return;
     }
-    if(_recEnabled && !_sayBusy) _schedRec(_isSafari?700:300);
+    if(_recEnabled && !_sayBusy) _schedRec(_isSafari ? 700 : 300);
   };
 
   r.onresult = function(e){
-    var last=e.results[e.results.length-1];
+    var last = e.results[e.results.length - 1];
     handle(last[0].transcript);
   };
 
@@ -386,12 +481,12 @@ function _startRec(){
 
 function initRec(){
   if(!SR){
-    setHeard('speech not supported');
-    document.getElementById('btn-panel').style.display='grid';
+    setHeard('riconoscimento non supportato');
+    document.getElementById('btn-panel').style.display = 'grid';
     return;
   }
-  _recEnabled=true;
-  setHeard('listening…');
+  _recEnabled = true;
+  setHeard('in ascolto…');
   _schedRec(200);
 }
 
@@ -399,12 +494,12 @@ function initRec(){
 //  BUTTON PANEL FALLBACK
 // ════════════════════════════════════════════════
 (function(){
-  var cmds=['DRY','WET','GO','STOP','BACK','CLEAR'];
-  var p=document.getElementById('btn-panel');
+  var cmds = ['DRY','WET','GO','BACK','CLEAR'];
+  var p = document.getElementById('btn-panel');
   cmds.forEach(function(c){
-    var b=document.createElement('button');
-    b.textContent=c;
-    b.addEventListener('click',function(){ handle(c.toLowerCase()); });
+    var b = document.createElement('button');
+    b.textContent = c;
+    b.addEventListener('click', function(){ handle(c.toLowerCase()); });
     p.appendChild(b);
   });
 })();
@@ -412,13 +507,13 @@ function initRec(){
 // ════════════════════════════════════════════════
 //  BOOT
 // ════════════════════════════════════════════════
-document.getElementById('overlay').addEventListener('click',function(){
-  _ctx=new (window.AudioContext||window.webkitAudioContext)();
-  if(_ctx.state==='suspended') _ctx.resume();
-  document.getElementById('overlay').style.display='none';
+document.getElementById('overlay').addEventListener('click', function(){
+  _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if(_ctx.state === 'suspended') _ctx.resume();
+  document.getElementById('overlay').style.display = 'none';
   initRec();
   render();
-},{once:true});
+}, { once: true });
 
 render();
 </script>
