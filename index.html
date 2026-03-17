@@ -285,7 +285,7 @@ function modeLabel(){
 function renderFull(){
   var seq = S.area ? S.seqs[S.area] : [], item = seq[S.idx];
   // Area name: show translated label
-  var areaLabel = S.area ? t(S.area).toUpperCase() : '—';
+  var areaLabel = S.area ? s(S.area).toUpperCase() : '—';
   document.getElementById('area-name').textContent = areaLabel;
   var meta = document.getElementById('meta');
   var pos = seq.length > 0 ? (S.idx+1)+' / '+seq.length : '';
@@ -372,7 +372,7 @@ function handle(transcript){
     stopTim();
     S.area = cmd; S.idx = 0; S.elapsed = 0;
     S.mode = S.seqs[cmd].length > 0 ? 'ready' : 'idle';
-    flash(t(cmd).toUpperCase()); say(t(cmd)); renderFull(); return;
+    flash(s(cmd).toUpperCase()); say(s(cmd)); renderFull(); return;
   }
 
   // ── SET (imposta) ──
