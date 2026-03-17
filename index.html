@@ -15,12 +15,9 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #overlay{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.6rem;z-index:998;}
 #overlay h1{font-family:'VT323',monospace;font-size:clamp(3rem,14vw,5.5rem);letter-spacing:0.3em;color:var(--r2);font-weight:400;}
 #overlay .sub{font-size:0.65rem;letter-spacing:0.45em;color:var(--r3);text-transform:uppercase;}
-#overlay .lang-btns{display:flex;gap:1.2rem;margin-top:2.8rem;flex-wrap:wrap;justify-content:center;}
-.lang-btn{background:transparent;border:1px solid var(--r2);color:var(--r);font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.3em;text-transform:uppercase;padding:0.75rem 1.4rem;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background 0.15s,color 0.15s;}
-.lang-btn:active,.lang-btn:hover{background:var(--r2);color:#000;}
+#overlay .tap{font-size:0.75rem;letter-spacing:0.45em;color:var(--r);text-transform:uppercase;margin-top:2.5rem;animation:blink 1.4s ease-in-out infinite;}
 #overlay .hint{margin-top:2.2rem;font-size:0.56rem;letter-spacing:0.14em;color:var(--r3);line-height:2.6;text-align:center;text-transform:uppercase;}
 #overlay .hint span{color:var(--r2);}
-#overlay .hint em{color:var(--r3);font-style:normal;}
 
 /* ── APP ── */
 #app{position:fixed;inset:0;display:grid;grid-template-rows:auto auto auto 1fr;padding:1.2rem 1.5rem 5.5rem;}
@@ -70,23 +67,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 <div id="overlay">
   <h1>DVC</h1>
   <div class="sub">Darkroom Vocal Controller</div>
-  <div class="lang-btns">
-    <button class="lang-btn" id="btn-en">Activate in English</button>
-    <button class="lang-btn" id="btn-it">Attiva in Italiano</button>
-  </div>
-  <div class="hint" id="hint-en">
+  <div class="tap">Tap to activate</div>
+  <div class="hint">
     <span>DRY</span> / <span>WET</span> — select area<br>
     <span>SET [NAME] [TIME]</span> — add interval, repeat to chain<br>
     <span>GO</span> — start &nbsp;·&nbsp; <span>BACK</span> — stop and rewind<br>
     <span>[interval name]</span> — jump to interval &nbsp;·&nbsp; <span>CLEAR</span> — reset
-  </div>
-  <div class="hint" id="hint-it" style="display:none">
-    <span>SECCA</span> / <span>UMIDA</span> — seleziona area di lavoro<br>
-    <span>IMPOSTA [NOME] [TEMPO]</span> — aggiungi un intervallo (minuti, secondi)<br>
-    <span>AVANTI</span> — avvia l'intervallo<br>
-    <span>INDIETRO</span> — interrompi e torna all'inizio · torna all'intervallo precedente<br>
-    <span>CANCELLA</span> — cancella gli intervalli impostati<br>
-    <span>[NOME]</span> — vai all'intervallo
   </div>
 </div>
 
@@ -113,85 +99,35 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 
 <script>
 // ══════════════════════════════════════════════════
-//  LANGUAGE
+//  STRINGS & COMMANDS — English only
 // ══════════════════════════════════════════════════
-var LANG = 'en'; // 'en' | 'it'
-
-// All user-facing strings
-var T = {
-  en: {
-    asr:         'en-US',
-    tts:         'en-US',
-    listening:   'listening…',
-    micDenied:   'mic denied — use buttons',
-    noSpeech:    'speech not supported',
-    selectArea:  'select an area first',
-    invalidTime: 'invalid time',
-    noIntervals: 'no intervals set',
-    ready:       'ready',
-    done:        'done',
-    clear:       'cleared',
-    back:        'back',
-    go:          'go',
-    // area display names (spoken + shown)
-    dry:         'dry',
-    wet:         'wet',
-    // interval fallback name
-    interval:    'interval',
-    // mode labels
-    idle:        'IDLE',
-    running:     'RUNNING',
-    stopped:     'STOPPED',
-    // button panel labels
-    btns:        ['DRY','WET','GO','BACK','CLEAR']
-  },
-  it: {
-    asr:         'it-IT',
-    tts:         'it-IT',
-    listening:   'in ascolto…',
-    micDenied:   'microfono negato — usa i tasti',
-    noSpeech:    'riconoscimento non supportato',
-    selectArea:  'seleziona prima una vasca',
-    invalidTime: 'tempo non valido',
-    noIntervals: 'nessun intervallo impostato',
-    ready:       'pronto',
-    done:        'completato',
-    clear:       'cancellato',
-    back:        'indietro',
-    go:          'avanti',
-    dry:         'secca',
-    wet:         'umida',
-    interval:    'intervallo',
-    idle:        'IDLE',
-    running:     'IN CORSO',
-    stopped:     'FERMO',
-    btns:        ['SECCA','UMIDA','AVANTI','INDIETRO','CANCELLA']
-  }
+var STR = {
+  asr:         'en-US',
+  tts:         'en-US',
+  listening:   'listening…',
+  micDenied:   'mic denied — use buttons',
+  noSpeech:    'speech not supported',
+  selectArea:  'select an area first',
+  invalidTime: 'invalid time',
+  noIntervals: 'no intervals set',
+  ready:       'ready',
+  done:        'done',
+  clear:       'cleared',
+  back:        'back',
+  go:          'go',
+  dry:         'dry',
+  wet:         'wet',
+  interval:    'interval',
+  idle:        'IDLE',
+  running:     'RUNNING',
+  stopped:     'STOPPED',
+  btns:        ['DRY','WET','GO','BACK','CLEAR'],
+  btnActs:     ['dry','wet','go','back','clear']
 };
 
-function t(key){ return T[LANG][key] || T['en'][key] || key; }
-
-// Command words per language — maps normalized spoken word → internal action
-var CMDS = {
-  en: {
-    dry:      'dry',
-    wet:      'wet',
-    set:      'set',
-    go:       'go',
-    back:     'back',
-    clear:    'clear'
-  },
-  it: {
-    secca:    'dry',
-    umida:    'wet',
-    imposta:  'set',
-    avanti:   'go',
-    indietro: 'back',
-    cancella: 'clear'
-  }
-};
-
-function resolveCmd(word){ return CMDS[LANG][word] || null; }
+var CMDS = { dry:'dry', wet:'wet', set:'set', go:'go', back:'back', clear:'clear' };
+function resolveCmd(w){ return CMDS[w] || null; }
+function s(key){ return STR[key] || key; }
 
 // ══════════════════════════════════════════════════
 //  AUDIO  — all volumes raised, balanced
@@ -243,7 +179,7 @@ function _sayNext(){
   var text = _sayQueue.shift();
   recAbortForTTS();
   var u = new SpeechSynthesisUtterance(text);
-  u.lang   = t('tts');
+  u.lang   = s('tts');
   u.rate   = 0.92;
   u.pitch  = 0.85;
   u.volume = 1;
@@ -341,9 +277,9 @@ function fmt(s){
 
 function modeLabel(){
   var m = S.mode;
-  if(m === 'running') return t('running');
-  if(m === 'stopped') return t('stopped');
-  return t('idle');
+  if(m === 'running') return s('running');
+  if(m === 'stopped') return s('stopped');
+  return s('idle');
 }
 
 function renderFull(){
@@ -396,11 +332,11 @@ function startTimer(){
           if(nxt < seq.length){
             S.idx = nxt; S.elapsed = 0; S.mode = 'ready';
             (function(nm){
-              setTimeout(function(){ say(nm); flash(t('ready').toUpperCase()); renderFull(); }, 900);
-            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : t('interval')+' '+(nxt+1));
+              setTimeout(function(){ say(nm); flash(s('ready').toUpperCase()); renderFull(); }, 900);
+            })(seq[nxt].name ? seq[nxt].name.toLowerCase() : s('interval')+' '+(nxt+1));
           } else {
             S.elapsed = 0; S.mode = 'idle';
-            setTimeout(function(){ say(t('done')); flash(t('done').toUpperCase()); renderFull(); }, 900);
+            setTimeout(function(){ say(s('done')); flash(s('done').toUpperCase()); renderFull(); }, 900);
           }
           renderFull(); return;
         }
@@ -441,14 +377,14 @@ function handle(transcript){
 
   // ── SET (imposta) ──
   if(cmd === 'set'){
-    if(!S.area){ say(t('selectArea')); return; }
+    if(!S.area){ say(s('selectArea')); return; }
     var rest = words.slice(1), name = null, timeW = rest;
     if(rest.length > 0 && !isTimeish(rest[0])){
       name = rest[0].toUpperCase();
       timeW = rest.slice(1);
     }
     var dur = parseDur(timeW);
-    if(!dur || dur <= 0){ say(t('invalidTime')); return; }
+    if(!dur || dur <= 0){ say(s('invalidTime')); return; }
     S.seqs[S.area].push({ name:name, duration:dur });
     S.mode = 'ready';
     var fb = name ? 'set '+name.toLowerCase() : 'set';
@@ -457,11 +393,11 @@ function handle(transcript){
 
   // ── GO (avanti) ──
   if(cmd === 'go'){
-    if(!S.area){ say(t('selectArea')); return; }
+    if(!S.area){ say(s('selectArea')); return; }
     var seq = S.seqs[S.area];
-    if(!seq.length){ say(t('noIntervals')); return; }
+    if(!seq.length){ say(s('noIntervals')); return; }
     if(S.idx >= seq.length){ S.idx=0; S.elapsed=0; }
-    flash('GO'); say(t('go')); startTimer(); renderFull(); return;
+    flash('GO'); say(s('go')); startTimer(); renderFull(); return;
   }
 
   // ── BACK (indietro) ──
@@ -471,8 +407,8 @@ function handle(transcript){
     if(S.elapsed > 0){ S.elapsed=0; S.mode='ready'; }
     else if(S.idx > 0){ S.idx--; S.elapsed=0; S.mode='ready'; }
     var cur = S.seqs[S.area][S.idx];
-    flash(t('back').toUpperCase());
-    say(cur && cur.name ? cur.name.toLowerCase() : t('back'));
+    flash(s('back').toUpperCase());
+    say(cur && cur.name ? cur.name.toLowerCase() : s('back'));
     renderFull(); return;
   }
 
@@ -481,7 +417,7 @@ function handle(transcript){
     if(!S.area) return;
     stopTim();
     S.seqs[S.area]=[]; S.idx=0; S.elapsed=0; S.mode='idle';
-    flash('CLEAR'); say(t('clear')); renderFull(); return;
+    flash('CLEAR'); say(s('clear')); renderFull(); return;
   }
 
   // ── NAMED INTERVAL JUMP ──
@@ -537,7 +473,7 @@ function _startRec(){
   // Chrome/Android: continuous works well; Safari/iOS: false + restart loop
   r.continuous     = (_isSafari || _isIOS) ? false : true;
   r.interimResults = false;
-  r.lang           = t('asr');
+  r.lang           = s('asr');
 
   r.onstart = function(){ _recLive=true;  _micOn(); };
 
@@ -549,7 +485,7 @@ function _startRec(){
   r.onerror = function(e){
     _recLive = false; _micOff();
     if(e.error==='not-allowed' || e.error==='service-not-allowed'){
-      setHeard(t('micDenied'));
+      setHeard(s('micDenied'));
       document.getElementById('btn-panel').style.display = 'grid';
       _recEnabled = false; return;
     }
@@ -567,11 +503,11 @@ function _startRec(){
 
 function initRec(){
   if(!SR){
-    setHeard(t('noSpeech'));
+    setHeard(s('noSpeech'));
     document.getElementById('btn-panel').style.display = 'grid';
     return;
   }
-  setHeard(t('listening'));
+  setHeard(s('listening'));
   _recEnabled = true;
   _schedRec(200);
 }
@@ -580,47 +516,33 @@ function initRec(){
 //  BUTTON PANEL FALLBACK
 // ══════════════════════════════════════════════════
 function buildButtons(){
-  var cmds = t('btns');
-  // internal actions map to lang-specific spoken words
-  var actions = LANG === 'it'
-    ? ['secca','umida','avanti','indietro','cancella']
-    : ['dry','wet','go','back','clear'];
   var p = document.getElementById('btn-panel');
   p.innerHTML = '';
-  cmds.forEach(function(label, i){
+  STR.btns.forEach(function(label, i){
     var b = document.createElement('button');
     b.textContent = label;
-    b.addEventListener('click', function(){ handle(actions[i]); });
+    b.addEventListener('click', function(){ handle(STR.btnActs[i]); });
     p.appendChild(b);
   });
 }
 
 // ══════════════════════════════════════════════════
-//  BOOT — language selection
+//  BOOT
 // ══════════════════════════════════════════════════
-function activate(lang){
-  LANG = lang;
-
-  // Unlock AudioContext
+document.getElementById('overlay').addEventListener('click', function(){
   _ctx = new (window.AudioContext || window.webkitAudioContext)();
   if(_ctx.state === 'suspended') _ctx.resume();
-
-  // iOS TTS warm-up: silent utterance to unlock audio session
   if(window.speechSynthesis){
     speechSynthesis.getVoices();
     var warm = new SpeechSynthesisUtterance(' ');
-    warm.volume = 0; warm.lang = t('tts');
+    warm.volume = 0; warm.lang = s('tts');
     speechSynthesis.speak(warm);
   }
-
   document.getElementById('overlay').style.display = 'none';
   buildButtons();
   initRec();
   renderFull();
-}
-
-document.getElementById('btn-en').addEventListener('click', function(){ activate('en'); });
-document.getElementById('btn-it').addEventListener('click', function(){ activate('it'); });
+}, { once: true });
 
 renderFull();
 </script>
