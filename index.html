@@ -58,6 +58,10 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 #btn-panel button{background:var(--bg);border:none;color:var(--r2);font-family:'Share Tech Mono',monospace;font-size:0.54rem;letter-spacing:0.14em;padding:0.65rem 0.2rem;cursor:pointer;text-transform:uppercase;-webkit-tap-highlight-color:transparent;}
 #btn-panel button:active{background:var(--r4);color:var(--r);}
 
+#overlay .copy{position:absolute;bottom:1.4rem;font-size:0.52rem;letter-spacing:0.18em;color:var(--r3);text-transform:uppercase;}
+#overlay .copy a{color:var(--r3);text-decoration:none;}
+#overlay .copy a:hover{color:var(--r2);}
+
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0.15;}}
 </style>
 </head>
@@ -74,9 +78,8 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
     <span>GO</span> — start &nbsp;·&nbsp; <span>BACK</span> — stop and rewind<br>
     <span>[interval name]</span> — jump to interval &nbsp;·&nbsp; <span>CLEAR</span> — reset
   </div>
+  <div class="copy">© 2026 Nicola Cionini / <a href="https://nicolacionini.it" target="_blank">nicolacionini.it</a></div>
 </div>
-
-<!-- APP -->
 <div id="app">
   <div>
     <div id="area-name">—</div>
@@ -208,10 +211,24 @@ function _sayNext(){
 // ══════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════
+
+// Persist sequences to localStorage
+var LS_KEY = 'dvc_seqs_v1';
+function _saveSeqs(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(S.seqs)); }catch(e){}
+}
+function _loadSeqs(){
+  try{
+    var raw = localStorage.getItem(LS_KEY);
+    if(raw){ var p=JSON.parse(raw); if(p.dry&&p.wet) S.seqs=p; }
+  }catch(e){}
+}
+
 var S = {
   area: null, seqs: { dry:[], wet:[] }, mode: 'idle',
   idx: 0, elapsed: 0, _tim: null, _wall: 0, _base: 0
 };
+_loadSeqs();
 
 // ══════════════════════════════════════════════════
 //  TIME PARSING  — Italian + English number words
@@ -378,7 +395,7 @@ function handle(transcript){
 
   var cmd = resolveCmd(words[0]);
 
-  // ── DRY / WET (secca / umida) ──
+  // ── DRY / WET ──
   if(cmd === 'dry' || cmd === 'wet'){
     stopTim();
     S.area = cmd; S.idx = 0; S.elapsed = 0;
@@ -386,7 +403,7 @@ function handle(transcript){
     flash(s(cmd).toUpperCase()); say(s(cmd)); renderFull(); return;
   }
 
-  // ── SET (imposta) ──
+  // ── SET ──
   if(cmd === 'set'){
     if(!S.area){ say(s('selectArea')); return; }
     var rest = words.slice(1), name = null, timeW = rest;
@@ -398,6 +415,7 @@ function handle(transcript){
     if(!dur || dur <= 0){ say(s('invalidTime')); return; }
     S.seqs[S.area].push({ name:name, duration:dur });
     S.mode = 'ready';
+    _saveSeqs();
     var fb = name ? 'set '+name.toLowerCase() : 'set';
     flash(fb.toUpperCase()); say(fb); renderFull(); return;
   }
@@ -423,11 +441,13 @@ function handle(transcript){
     renderFull(); return;
   }
 
-  // ── CLEAR (cancella) ──
+  // ── CLEAR ──
   if(cmd === 'clear'){
     if(!S.area) return;
     stopTim();
     S.seqs[S.area]=[]; S.idx=0; S.elapsed=0; S.mode='idle';
+    _cursor[S.area]={idx:0,elapsed:0};
+    _saveSeqs();
     flash('CLEAR'); say(s('clear')); renderFull(); return;
   }
 
